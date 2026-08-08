@@ -47,27 +47,25 @@ for excel_file in excel_files:
     # Add column to save file name
     df["Source File"] = excel_file.name
 
-    df.drop_duplicates(subset="Item ID", keep="first")
-
-    df["Unit Price ($)"].replace("$","", regex=False);
+    df = df.drop_duplicates(subset="Item ID", keep="first")
 
     all_data.append(df)
 
 # Combine all data
 combined_df = pd.concat(all_data, ignore_index=True)
 
-# Drop empty rows
+# Drop rows with missing values
 combined_df = combined_df.dropna()
 
 # Convert data to numeric values for calculations
 for column in numeric_columns:
     combined_df[column] = pd.to_numeric(combined_df[column], errors="coerce")
 
-combined_df["Total Cost $"] = (combined_df["Quantity Sold"] + combined_df["Unit Price ($)"])
+combined_df["Total Cost $"] = (combined_df["Quantity Sold"] * combined_df["Unit Price ($)"])
 
 # Calculate sales by Category
 summary = (
-    combined_df.groupby("Category", as_index=False)["Quantity Sold"].sum()
+    combined_df.groupby("Category", as_index=False)["Quantity Sold"].sum().sort_values("Quantity Sold", ascending=False).reset_index(drop=True)
 )
 
 # Save everything to one Excel workbook
